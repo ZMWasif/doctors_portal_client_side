@@ -8,6 +8,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import Loading from "../Shared/Loading";
 import { Link, useNavigate } from "react-router-dom";
 import { useUpdateProfile } from "react-firebase-hooks/auth";
+import useToken from "../../hooks/useToken";
 
 const SignUp = () => {
   const [signInWithGoogle, gUser, gLoading, gError] = useSignInWithGoogle(auth);
@@ -19,6 +20,8 @@ const SignUp = () => {
   const [createUserWithEmailAndPassword, user, loading, error] =
     useCreateUserWithEmailAndPassword(auth);
   const [updateProfile, updating, updateError] = useUpdateProfile(auth);
+
+  const [token] = useToken(user || gUser);
 
   const navigate = useNavigate();
 
@@ -36,14 +39,13 @@ const SignUp = () => {
       </p>
     );
   }
-  if (user || gUser) {
-    console.log(gUser);
+  if (token) {
+    navigate("/appointment");
   }
   const onSubmit = async (data) => {
     await createUserWithEmailAndPassword(data.email, data.password);
     await updateProfile({ displayName: data.name });
     console.log("Update Done");
-    navigate("/appointment");
   };
   return (
     <div className="flex h-screen justify-center items-center bg-[url('/src/assets/images/bg5.jpg')]">

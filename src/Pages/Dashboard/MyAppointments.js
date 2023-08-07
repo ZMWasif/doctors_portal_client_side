@@ -1,21 +1,41 @@
 import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import auth from "../../firebase.init";
+import { useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
 
 const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [user] = useAuthState(auth);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (user) {
-      fetch(`http://localhost:5000/booking?patient=${user.email}`)
-        .then((res) => res.json())
-        .then((data) => setAppointments(data));
+      fetch(`http://localhost:5000/booking?patient=${user.email}`, {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      })
+        .then((res) => {
+          console.log("res", res);
+          if (res.status === 401 || res.status === 403) {
+            signOut(auth);
+            localStorage.removeItem("accessToken");
+            navigate("/");
+          }
+
+          return res.json();
+        })
+        .then((data) => {
+          setAppointments(data);
+        });
     }
   }, [user]);
   return (
     <div>
-      <h2>My Appointments: {appointments.length}</h2>
+      <h2 className="mt-3 mb-3">My Appointments: {appointments.length}</h2>
       <div className="overflow-x-auto">
         <table className="table">
           {/* head */}
@@ -29,9 +49,9 @@ const MyAppointments = () => {
             </tr>
           </thead>
           <tbody>
-            {appointments.map((a) => (
+            {appointments.map((a, index) => (
               <tr>
-                <th>1</th>
+                <th>{index + 1}</th>
                 <td>{a.patientName}</td>
                 <td>{a.date}</td>
                 <td>{a.slot}</td>
